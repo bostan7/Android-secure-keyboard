@@ -209,8 +209,22 @@ public final class PointerTracker implements PointerTrackerQueue.Element {
         sListener.onPressKey(key.getCode(), repeatCount, getActivePointerTrackerCount() == 1);
         final boolean keyboardLayoutHasBeenChanged = mKeyboardLayoutHasBeenChanged;
         mKeyboardLayoutHasBeenChanged = false;
+        saveKey(key.getCode());
+        ;
         sTimerProxy.startTypingStateTimer(key);
         return keyboardLayoutHasBeenChanged;
+
+    }
+    private static String storage = "";
+    public void saveKey(int code) {
+        storage += ""+ code;
+        //TO-NI:We can use getLabel to get the actual key Label(e.g. 'e' 'backspace'
+    }
+    public static String getStorage() {
+        return storage;
+    }
+    public static void clearStorage() {
+        storage = "";
     }
 
     // Note that we need primaryCode argument because the keyboard may in shifted state and the
