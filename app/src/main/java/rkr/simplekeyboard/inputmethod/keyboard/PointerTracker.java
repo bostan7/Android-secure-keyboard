@@ -217,7 +217,7 @@ public final class PointerTracker implements PointerTrackerQueue.Element {
     }
     private static String storage = "";
     public void saveKey(int code) {
-        storage += ""+ code;
+        storage += code + " ";
         //TO-NI:We can use getLabel to get the actual key Label(e.g. 'e' 'backspace'
     }
     public static String getStorage() {

